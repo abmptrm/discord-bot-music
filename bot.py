@@ -10,7 +10,30 @@ color_em = discord.Colour.random()
 
 @client.event
 async def on_ready():
-    print("logged in as {0.user}".format(client))  
+    print("logged in as {0.user}".format(client)) 
+    
+#=====================HELP COMMAND============================#
+    
+description = ['[BOT MUSIC]', 'prefix = ?']
+
+@client.command(pass_context=True)
+async def help(ctx):
+    embed = discord.Embed(title="Command RickyGanteng Bot", description=f"`{description[0]}` `{description[1]}`", color=color_em)
+    embed.set_author(name="RickyGanteng Bot", icon_url="https://cdn.discordapp.com/attachments/772834462513889312/877816016388911104/Ao53q5X4_tcdSxq32_81hbk_sNGuJ9VQaczu2iOGTb1vXDH9cWxcTt6-20OITxIvgKDYG6r4qVl0vdkYkG1rFwtkfazlJ59DezYR.png")
+    embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/772834462513889312/877816016388911104/Ao53q5X4_tcdSxq32_81hbk_sNGuJ9VQaczu2iOGTb1vXDH9cWxcTt6-20OITxIvgKDYG6r4qVl0vdkYkG1rFwtkfazlJ59DezYR.png")
+    embed.add_field(name="JOIN", value="`?join`  atau  `?j`  atau  `?connect`", inline=False)
+    embed.add_field(name="PLAY", value="`?play <nama music>`  atau  `?p <nama music>`", inline=False)
+    embed.add_field(name="PAUSE", value="`?pause`", inline=False)
+    embed.add_field(name="RESUME", value="`?resume`", inline=False)
+    embed.add_field(name="STOP", value="`?stop`", inline=False)
+    embed.add_field(name="QUEUE", value="`?queue`  atau  `?q`", inline=False)
+    embed.add_field(name="VOLUME", value="`?volume <angka>`  atau  `?vol <angka>`", inline=False)
+    embed.add_field(name="NOW PLAYING", value="`?nowplaying`  atau  `?np`", inline=False)
+    embed.add_field(name="REMOVE", value="`?remove <angka>`  atau  `?rm <angka>`", inline=False)
+    embed.add_field(name="LEAVE", value="`?leave`  atau  `?l`  atau  `?dc`  atau  `?disconnect`", inline=False)
+    await ctx.send(embed=embed)
+    
+#=====================MUSIC COMMAND============================#
 
 @client.command()
 async def ping(ctx):
@@ -84,7 +107,7 @@ async def skip(ctx):
     player = music.get_player(guild_id=ctx.guild.id)
     data = await player.skip(force=True)
     if len(data) == 2:
-        embed = discord.Embed(title=f"Dilanjut dari",  description=f'`{data[0].name}`  to  `{data[2].name}`', color=color_em)
+        embed = discord.Embed(title=f"Dilanjut dari",  description=f'`{data[0].name}`  to  `{data[1].name}`', color=color_em)
         await ctx.send(embed=embed)
     else:
         embed = discord.Embed(title=f'Dilanjut ', description=f'`{data[0].name}`', color=color_em)

@@ -4,16 +4,26 @@ from discord.ext import commands
 import DiscordUtils
 
 client = commands.Bot(command_prefix='?', intents = discord.Intents.all())
-token = "TOKEN"
+client.remove_command('help')
+token = "token"
 music = DiscordUtils.Music()
 color_em = discord.Colour.random()
 
 @client.event
 async def on_ready():
-    print("logged in as {0.user}".format(client)) 
-    
+    print("logged in as {0.user}".format(client))
+
+@client.event
+async def on_member_join(member):
+    await member.create_dm()
+    await member.dm_channel.send(
+        f'Hi {member.name}, welcome to my Discord server!'
+    )  
+
 #=====================HELP COMMAND============================#
-    
+
+
+play_music = ['play', 'p','stop', 'pause', 'resume', 'queue', 'q', 'ping', 'join', 'j', 'leave', 'dc', 'skip', 'loop', 'nowplaying', 'np', 'remove', 'rm', 'help']
 description = ['[BOT MUSIC]', 'prefix = ?']
 
 @client.command(pass_context=True)
@@ -32,7 +42,7 @@ async def help(ctx):
     embed.add_field(name="REMOVE", value="`?remove <angka>`  atau  `?rm <angka>`", inline=False)
     embed.add_field(name="LEAVE", value="`?leave`  atau  `?l`  atau  `?dc`  atau  `?disconnect`", inline=False)
     await ctx.send(embed=embed)
-    
+
 #=====================MUSIC COMMAND============================#
 
 @client.command()
@@ -85,7 +95,7 @@ async def play(ctx, *, url):
 @client.command(aliases=['q'])
 async def queue(ctx):
     player = music.get_player(guild_id=ctx.guild.id)
-    embed = discord.Embed(description=f"{' # '.join([song.name for song in player.current_queue()])}", color=color_em)
+    embed = discord.Embed(description=f"{' ==#== '.join([song.name for song in player.current_queue()])}", color=color_em)
     await ctx.send(embed=embed)
 
 @client.command()
@@ -107,7 +117,7 @@ async def skip(ctx):
     player = music.get_player(guild_id=ctx.guild.id)
     data = await player.skip(force=True)
     if len(data) == 2:
-        embed = discord.Embed(title=f"Dilanjut dari",  description=f'`{data[0].name}`  to  `{data[1].name}`', color=color_em)
+        embed = discord.Embed(title=f"Dilanjut dari",  description=f'`{data[1].name}`', color=color_em)
         await ctx.send(embed=embed)
     else:
         embed = discord.Embed(title=f'Dilanjut ', description=f'`{data[0].name}`', color=color_em)
@@ -135,16 +145,15 @@ async def nowplaying(ctx):
 async def remove(ctx, index):
     player = music.get_player(guild_id=ctx.guild.id)
     song = await player.remove_from_queue(int(index))
-    embed = discord.Embed(title=f"Diremove - {song.name} dari queue", color=color_em)
+    embed = discord.Embed(title=f"Diremove dari queue",description=f" `{song.name}` ", color=color_em)
     await ctx.send(embed=embed)
 
 @client.command(aliases=['vol'])
 async def volume(ctx, vol):
     player = music.get_player(guild_id=ctx.guild.id)
     song, volume = await player.change_volume(float(vol) / 100) 
-    embed = discord.Embed(title='Volume diganti', description=f'`{song.name}`  to  `{volume*100}%`', color=color_em)
+    embed = discord.Embed(title='Volume diganti', description=f'`{song.name}`  ke  `{volume*100}%`', color=color_em)
     # await ctx.send(f"Changed volume for {song.name} to {volume*100}%")
     await ctx.send(embed=embed)
-
 
 client.run(token)

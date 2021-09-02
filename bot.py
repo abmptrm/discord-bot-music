@@ -22,8 +22,6 @@ async def on_member_join(member):
 
 #=====================HELP COMMAND============================#
 
-
-play_music = ['play', 'p','stop', 'pause', 'resume', 'queue', 'q', 'ping', 'join', 'j', 'leave', 'dc', 'skip', 'loop', 'nowplaying', 'np', 'remove', 'rm', 'help']
 description = ['[BOT MUSIC]', 'prefix = ?']
 
 @client.command(pass_context=True)

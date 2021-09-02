@@ -2,7 +2,6 @@ import discord
 from time import monotonic
 from discord.ext import commands
 import DiscordUtils
-from keep_alive import keep_alive
 
 client = commands.Bot(command_prefix='?', intents = discord.Intents.all())
 client.remove_command('help')
@@ -157,5 +156,4 @@ async def volume(ctx, vol):
     # await ctx.send(f"Changed volume for {song.name} to {volume*100}%")
     await ctx.send(embed=embed)
 
-keep_alive()
 client.run(token)

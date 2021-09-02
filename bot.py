@@ -5,7 +5,7 @@ import DiscordUtils
 
 client = commands.Bot(command_prefix='?', intents = discord.Intents.all())
 client.remove_command('help')
-token = "ODc4NTM4Nzc2NTY0MDg4ODMy.YSCo_g.UiEnN1eWV-eC5DzcOvfHhg6CY3k"
+token = "token"
 music = DiscordUtils.Music()
 color_em = discord.Colour.random()
 
@@ -28,9 +28,9 @@ description = ['[BOT MUSIC]', 'prefix = ?']
 
 @client.command(pass_context=True)
 async def help(ctx):
-    embed = discord.Embed(title="Command RickyGanteng Bot", description=f"`{description[0]}` `{description[1]}`", color=color_em)
-    embed.set_author(name="RickyGanteng Bot", icon_url="https://cdn.discordapp.com/attachments/772834462513889312/877816016388911104/Ao53q5X4_tcdSxq32_81hbk_sNGuJ9VQaczu2iOGTb1vXDH9cWxcTt6-20OITxIvgKDYG6r4qVl0vdkYkG1rFwtkfazlJ59DezYR.png")
-    embed.set_thumbnail(url="https://cdn.discordapp.com/attachments/772834462513889312/877816016388911104/Ao53q5X4_tcdSxq32_81hbk_sNGuJ9VQaczu2iOGTb1vXDH9cWxcTt6-20OITxIvgKDYG6r4qVl0vdkYkG1rFwtkfazlJ59DezYR.png")
+    embed = discord.Embed(title="Command bot music", description=f"`{description[0]}` `{description[1]}`", color=color_em)
+    embed.set_author(name="bot music", icon_url="icon.png")
+    embed.set_thumbnail(url="thumbnail.png")
     embed.add_field(name="JOIN", value="`?join`  atau  `?j`  atau  `?connect`", inline=False)
     embed.add_field(name="PLAY", value="`?play <nama music>`  atau  `?p <nama music>`", inline=False)
     embed.add_field(name="PAUSE", value="`?pause`", inline=False)

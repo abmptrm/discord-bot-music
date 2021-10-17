@@ -1,159 +1,175 @@
 import discord
-from time import monotonic
+from discord import Embed as embed
+from discord import Colour as color
 from discord.ext import commands
-import DiscordUtils
+import DiscordUtils 
+from time import sleep
+from time import monotonic
 
-client = commands.Bot(command_prefix='?', intents = discord.Intents.all())
-client.remove_command('help')
-token = "token"
+bot = commands.Bot(command_prefix="?", intents = discord.Intents.all(), help_command=None)
+token = "TOKEN"
 music = DiscordUtils.Music()
-color_em = discord.Colour.random()
 
-@client.event
+@bot.event 
 async def on_ready():
-    print("logged in as {0.user}".format(client))
+    print("Bot Ready {0.user}".format(bot))
+    await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening,name="?help 🎸"))
 
-@client.event
-async def on_member_join(member):
-    await member.create_dm()
-    await member.dm_channel.send(
-        f'Hi {member.name}, welcome to my Discord server!'
-    )  
-
-#=====================HELP COMMAND============================#
-
-
-play_music = ['play', 'p','stop', 'pause', 'resume', 'queue', 'q', 'ping', 'join', 'j', 'leave', 'dc', 'skip', 'loop', 'nowplaying', 'np', 'remove', 'rm', 'help']
-description = ['[BOT MUSIC]', 'prefix = ?']
-
-@client.command(pass_context=True)
+@bot.command(pass_context=True)
 async def help(ctx):
-    embed = discord.Embed(title="Command bot music", description=f"`{description[0]}` `{description[1]}`", color=color_em)
-    embed.set_author(name="bot music", icon_url="icon.png")
-    embed.set_thumbnail(url="thumbnail.png")
-    embed.add_field(name="JOIN", value="`?join`  atau  `?j`  atau  `?connect`", inline=False)
-    embed.add_field(name="PLAY", value="`?play <nama music>`  atau  `?p <nama music>`", inline=False)
-    embed.add_field(name="PAUSE", value="`?pause`", inline=False)
-    embed.add_field(name="RESUME", value="`?resume`", inline=False)
-    embed.add_field(name="STOP", value="`?stop`", inline=False)
-    embed.add_field(name="QUEUE", value="`?queue`  atau  `?q`", inline=False)
-    embed.add_field(name="VOLUME", value="`?volume <angka>`  atau  `?vol <angka>`", inline=False)
-    embed.add_field(name="NOW PLAYING", value="`?nowplaying`  atau  `?np`", inline=False)
-    embed.add_field(name="REMOVE", value="`?remove <angka>`  atau  `?rm <angka>`", inline=False)
-    embed.add_field(name="LEAVE", value="`?leave`  atau  `?l`  atau  `?dc`  atau  `?disconnect`", inline=False)
-    await ctx.send(embed=embed)
+    emd = embed(title="🎸 **Bot Command** 🎸", description="**PREFIX** = ` ? `", color=color.random())
+    emd.set_thumbnail(url="https://media.discordapp.net/attachments/772834462513889312/877816016388911104/Ao53q5X4_tcdSxq32_81hbk_sNGuJ9VQaczu2iOGTb1vXDH9cWxcTt6-20OITxIvgKDYG6r4qVl0vdkYkG1rFwtkfazlJ59DezYR.png")
+    emd.add_field(name="**•** Music (18)", value="`join`, `leave`, `dc`, `play`, `p`, `pause`, `resume`, `stop`, `loop`, `queue`, `q`, `nowplaying`, `np`, `skip`, `volume`, `vol`, `remove`, `rm`", inline=False)
+    emd.add_field(name="**•** Utils (2)", value="`invite`, `ping`", inline=False)
+    await ctx.send(embed=emd)
 
-#=====================MUSIC COMMAND============================#
+@bot.command()
+async def invite(ctx):
+    message = await ctx.send("Thanks!")
+    emd = embed(title="Bot 🤖", description="[**Click here!**]("LINK INVITE BOT")", color=color.random())
+    await message.edit(embed= emd)
+    await message.add_reaction("🎉")
 
-@client.command()
+@bot.command()
 async def ping(ctx):
     before = monotonic()
     message = await ctx.send("Pong!")
     ping = (monotonic() - before) * 100
-    embed = discord.Embed(title=f'Pong! `{int(ping)}ms`', color=color_em)
-    await message.edit(embed = embed)
+    emd = embed(title=f'📡 Pong! `{int(ping)}ms`', color=color.random())
+    await message.edit(embed = emd)
+    await message.add_reaction("📡")
 
-@client.command(aliases=['j', 'connect'])
+@bot.command()
 async def join(ctx):
     voicetrue = ctx.author.voice
     if voicetrue is None:
-        embed = discord.Embed(title="Lu gada di voice channel bro!", color=color_em)
-        return await ctx.send(embed=embed)     
+        embed = discord.Embed(title="⛔ You are not connected to the voice channel", color=color.random())
+        return await ctx.send(embed=embed)  
     await ctx.author.voice.channel.connect()
-    embed = discord.Embed(title='Udah masuk bro!',color=color_em)
+    embed = discord.Embed(title='Joined ✅',color=color.random())
     await ctx.send(embed=embed)
-
-@client.command(aliases=['l', 'dc', 'disconnect'])
+    
+@bot.command(name="leave", aliases=["dc"])
 async def leave(ctx):
+    player = music.get_player(guild_id=ctx.guild.id)
+    await player.stop()
+
     voicetrue = ctx.author.voice
     voicetrue_me = ctx.guild.me.voice
     if voicetrue is None:
-        embed = discord.Embed(title="Lu gada di voice channel bro!", color=color_em)
+        embed = discord.Embed(title="⛔ You are not connected to the voice channel !", color=color.random())
         return await ctx.send(embed=embed)
     if voicetrue_me is None:
-        embed = discord.Embed(title="Gw lagi gada di voice channel bro!", color=color_em)
+        embed = discord.Embed(title="I'm not on to voice channel", color=color.random())
         return await ctx.send(embed=embed)
-    await ctx.voice_client.disconnect()   
-    embed = discord.Embed(title='Udah keluar bro!', color=color_em)
+    await bot.voice_clients[0].disconnect()   
+    embed = discord.Embed(title='Leave ✅', color=color.random())
     await ctx.send(embed=embed)
 
-@client.command(aliases=['p'])
+    sleep(1.0)
+    await bot.voice_clients.disconnect()
+
+@bot.command(name="play", aliases=["p"])
 async def play(ctx, *, url):
+
     player = music.get_player(guild_id=ctx.guild.id)
     if not player:
         player = music.create_player(ctx, ffmpeg_error_betterfix=True)
     if not ctx.voice_client.is_playing():
         await player.queue(url, search=True)
         song = await player.play()
-        embed = discord.Embed(title="Mainkan", description=f'`{song.name}`', color=color_em)
-        await ctx.send(embed=embed)
+        emd = embed(title=f"Playing `{song.name}`")
+        await ctx.send(embed=emd)
     else:
         song = await player.queue(url, search=True)
-        embed = discord.Embed(title=f"Di tambahkan ke queue", description=f'`{song.name}`', color=color_em)
-        await ctx.send(embed=embed)
-
-@client.command(aliases=['q'])
-async def queue(ctx):
-    player = music.get_player(guild_id=ctx.guild.id)
-    embed = discord.Embed(description=f"{' ==#== '.join([song.name for song in player.current_queue()])}", color=color_em)
-    await ctx.send(embed=embed)
-
-@client.command()
+        emd = embed(title=f"Queued `{song.name}`")
+        await ctx.send(embed=emd)
+        
+        
+@bot.command()
 async def pause(ctx):
     player = music.get_player(guild_id=ctx.guild.id)
     song = await player.pause()
-    embed = discord.Embed(title=f"Dijeda", description=f'`{song.name}`', color=color_em)
-    await ctx.send(embed=embed)
-
-@client.command()
+    emd = embed(title=f"Paused `{song.name}`")
+    await ctx.send(embed=emd)
+    # await ctx.send(f"Paused {song.name}")
+    
+@bot.command()
 async def resume(ctx):
     player = music.get_player(guild_id=ctx.guild.id)
     song = await player.resume()
-    embed = discord.Embed(title=f"Dilanjut  {song.name}", color=color_em)
-    await ctx.send(embed=embed)
-
-@client.command()
-async def skip(ctx):
+    emd = embed(title=f"Resumed `{song.name}`")
+    await ctx.send(embed=emd)
+    # await ctx.send(f"Resumed {song.name}")
+    
+@bot.command()
+async def stop(ctx):
     player = music.get_player(guild_id=ctx.guild.id)
-    data = await player.skip(force=True)
-    if len(data) == 2:
-        embed = discord.Embed(title=f"Dilanjut dari",  description=f'`{data[1].name}`', color=color_em)
-        await ctx.send(embed=embed)
-    else:
-        embed = discord.Embed(title=f'Dilanjut ', description=f'`{data[0].name}`', color=color_em)
-        await ctx.send(embed=embed)
-
-@client.command()
+    song =  player.stop()
+    emd = embed(title=f"Stopped `{song.name}`")
+    await ctx.send(embed=emd)
+    # await ctx.send("Stopped")
+    
+@bot.command()
 async def loop(ctx):
     player = music.get_player(guild_id=ctx.guild.id)
     song = await player.toggle_song_loop()
     if song.is_looping:
-        embed = discord.Embed(title=f'Dilooping',  description=f'`{song.name}`', color=color_em)
-        await ctx.send(embed=embed)
+        emd = embed(title=f"Enabled loop for `{song.name}`")
+        await ctx.send(embed=emd)
+        # await ctx.send(f"Enabled loop for {song.name}")
     else:
-        embed = discord.Embed(title=f'Gak looping  {song.name}', color=color_em)
-        await ctx.send(embed=embed)
-
-@client.command(aliases=['np'])
+        emd = embed(title=f"Disabled loop for `{song.name}`")
+        await ctx.send(embed=emd)
+        # await ctx.send(f"Disabled loop for {song.name}")
+    
+@bot.command(name="queue", aliases=["q"])
+async def queue(ctx):
+    player = music.get_player(guild_id=ctx.guild.id)
+    nl = ")` \n **•** `(".join([song.name for song in player.current_queue()])
+    bc = "\n"
+    ti = "**•**"
+    emd = embed(title="Queue", description=f"{ti} `({nl})`{bc}")
+    await ctx.send(embed=emd)
+    # await ctx.send(f"`({')`\n `('.join([song.name for song in player.current_queue()])})`\n")
+    
+@bot.command(name="nowplaying", aliases=["np"])
 async def nowplaying(ctx):
     player = music.get_player(guild_id=ctx.guild.id)
     song = player.now_playing()
-    embed = discord.Embed(title=f"Lagu yg sedang di putar",  description=f'`{song.name}`', color=color_em)
-    await ctx.send(embed=embed)
-
-@client.command(aliases=['rm'])
-async def remove(ctx, index):
+    emd = embed(title=f"Now Playing `{song.name}`")
+    await ctx.send(embed=emd)
+    # await ctx.send(song.name)
+    
+@bot.command()
+async def skip(ctx):
     player = music.get_player(guild_id=ctx.guild.id)
-    song = await player.remove_from_queue(int(index))
-    embed = discord.Embed(title=f"Diremove dari queue",description=f" `{song.name}` ", color=color_em)
-    await ctx.send(embed=embed)
+    data = await player.skip(force=True)
+    if len(data) == 2:
+        emd = embed(title=f"Skipped from `{data[0].name}`")
+        await ctx.send(embed=emd)
+        # await ctx.send(f"Skipped from {data[0].name} to {data[1].name}")
+    else:
+        emd = embed(title=f"Skipped `{data[0].name}`")
+        await ctx.send(embed=emd)
+        # await ctx.send(f"Skipped {data[0].name}")
 
-@client.command(aliases=['vol'])
+@bot.command(name="volume", aliases=["vol"])
 async def volume(ctx, vol):
     player = music.get_player(guild_id=ctx.guild.id)
     song, volume = await player.change_volume(float(vol) / 100) 
-    embed = discord.Embed(title='Volume diganti', description=f'`{song.name}`  ke  `{volume*100}%`', color=color_em)
+    emd = embed(title=f"Changed volume for `{song.name}` to `{volume*100}%`")
+    await ctx.send(embed=emd)
     # await ctx.send(f"Changed volume for {song.name} to {volume*100}%")
-    await ctx.send(embed=embed)
+    
+@bot.command(name="remove", aliases=["rm"])
+async def remove(ctx, index):
+    player = music.get_player(guild_id=ctx.guild.id)
+    song = await player.remove_from_queue(int(index))
+    emd = embed(title=f"Removed `{song.name}` from queue")
+    await ctx.send(embed=emd)
+    # await ctx.send(f"Removed {song.name} from queue")
 
-client.run(token)
+
+
+bot.run(token)

@@ -18,7 +18,7 @@ async def on_ready():
 @bot.command(pass_context=True)
 async def help(ctx):
     emd = embed(title="🎸 **Bot Command** 🎸", description="**PREFIX** = ` ? `", color=color.random())
-    emd.set_thumbnail(url="https://media.discordapp.net/attachments/772834462513889312/877816016388911104/Ao53q5X4_tcdSxq32_81hbk_sNGuJ9VQaczu2iOGTb1vXDH9cWxcTt6-20OITxIvgKDYG6r4qVl0vdkYkG1rFwtkfazlJ59DezYR.png")
+    emd.set_thumbnail(url="Your Photo")
     emd.add_field(name="**•** Music (18)", value="`join`, `leave`, `dc`, `play`, `p`, `pause`, `resume`, `stop`, `loop`, `queue`, `q`, `nowplaying`, `np`, `skip`, `volume`, `vol`, `remove`, `rm`", inline=False)
     emd.add_field(name="**•** Utils (2)", value="`invite`, `ping`", inline=False)
     await ctx.send(embed=emd)

@@ -1,32 +1,73 @@
 import discord
+from discord import player
+import discordSuperUtils
+from time import monotonic
+from time import sleep
+from discord.ext import commands
 from discord import Embed as embed
 from discord import Colour as color
-from discord.ext import commands
-import DiscordUtils 
-from time import sleep
-from time import monotonic
+from discordSuperUtils import MusicManager
 
-bot = commands.Bot(command_prefix="?", intents = discord.Intents.all(), help_command=None)
-token = "TOKEN"
-music = DiscordUtils.Music()
 
-@bot.event 
+client_id = "8c4b6ca346d749d0a065d768f2fdf4fb"
+client_secret = "53734343746a4b47b12991f95f021813"
+
+bot = commands.Bot(command_prefix="?", help_command=None)
+MusicManager = MusicManager(bot, client_id=client_id,
+                                  client_secret=client_secret, spotify_support=True)
+
+# help_command=None
+
+# MusicManager = MusicManager(bot, client_id=client_id,
+#                                   client_secret=client_secret, spotify_support=True)
+
+# if using spotify support use this instead ^^^
+
+
+@MusicManager.event()
+async def on_music_error(ctx, error):
+    raise error  # add your error handling here! Errors are listed in the documentation.
+
+
+@MusicManager.event()
+async def on_queue_end(ctx):
+    print(f"The queue has ended in {ctx}")
+    # You could wait and check activity, etc...
+
+
+@MusicManager.event()
+async def on_inactivity_disconnect(ctx):
+    print(f"I have left {ctx} due to inactivity..")
+
+
+@MusicManager.event()
+async def on_play(ctx, player):
+    # await ctx.send(f"Playing {player}")
+    emds = embed(description=f"🎶**Playing**  `{player}`", color=color.random())
+    emds.set_footer(text=f"Requested by {ctx.author.name}", icon_url=ctx.author.avatar_url)
+    message = await ctx.send(embed=emds)
+    await message.add_reaction("🎸")
+
+
+@bot.event
 async def on_ready():
-    print("Bot Ready {0.user}".format(bot))
+    # database = discordSuperUtils.DatabaseManager.connect(...)
+    # await MusicManager.connect_to_database(database, ["playlists"])
+
+    print(f"{bot.user} is ready.")
     await bot.change_presence(activity=discord.Activity(type=discord.ActivityType.listening,name="?help 🎸"))
 
 @bot.command(pass_context=True)
 async def help(ctx):
     emd = embed(title="🎸 **Bot Command** 🎸", description="**PREFIX** = ` ? `", color=color.random())
-    emd.set_thumbnail(url="Your Photo")
-    emd.add_field(name="**•** Music (18)", value="`join`, `leave`, `dc`, `play`, `p`, `pause`, `resume`, `stop`, `loop`, `queue`, `q`, `nowplaying`, `np`, `skip`, `volume`, `vol`, `remove`, `rm`", inline=False)
-    emd.add_field(name="**•** Utils (2)", value="`invite`, `ping`", inline=False)
+    emd.add_field(name="**•** Music (15)", value="(`join`), (`leave`, `dc`), (`play`, `p`), (`pause`), (`resume`), (`loop`), (`loopstatus`, `ls`), (`queueloop`, `ql`), (`queue`, `q`), (`nowplaying`, `np`), (`skip`), (`volume`, `vol`), (`shuffle`), (`rewind`), ", inline=False)
+    emd.add_field(name="**•** Utils (3)", value="(`help`), (`invite`), (`ping`)", inline=False)
     await ctx.send(embed=emd)
 
 @bot.command()
 async def invite(ctx):
     message = await ctx.send("Thanks!")
-    emd = embed(title="Bot 🤖", description="[**Click here!**]("LINK INVITE BOT")", color=color.random())
+    emd = embed(title="Invite Ricktify 🎸", description="[**Click here!**](https://discord.com/api/oauth2/authorize?client_id=878538776564088832&permissions=8&scope=bot)", color=color.random())
     await message.edit(embed= emd)
     await message.add_reaction("🎉")
 
@@ -35,141 +76,236 @@ async def ping(ctx):
     before = monotonic()
     message = await ctx.send("Pong!")
     ping = (monotonic() - before) * 100
-    emd = embed(title=f'📡 Pong! `{int(ping)}ms`', color=color.random())
+    emd = embed(description=f"📡 Pong! `{int(ping)}ms`", color=color.random())
+    emd.set_footer(text=f"Requested by {message.author.name}", icon_url=ctx.author.avatar_url)
     await message.edit(embed = emd)
     await message.add_reaction("📡")
 
+
+@bot.command(aliases=["dc"])
+async def leave(ctx):
+    if await MusicManager.leave(ctx):
+        # await ctx.send("Left Voice Channel")
+        emd = embed(description="Disconnected", color=color.random())
+        message = await ctx.send(embed=emd)
+        await message.add_reaction("✅")
+
+
+@bot.command(aliases=["nowplaying"])
+async def np(ctx):
+    if player := await MusicManager.now_playing(ctx):
+        duration_played = await MusicManager.get_player_played_duration(ctx, player)
+        # You can format it, of course.
+
+        # await ctx.send(
+        #     f"Currently playing: {player}, \n"
+        #     f"Duration: {duration_played}/{player.duration}"
+        # )
+        
+        emd = embed(description=f"**Now Playing** \n🎶Playing : `{player}`\nDuration : {duration_played}/{player.duration}", color=color.random())
+        message = await ctx.send(embed=emd)
+        await message.add_reaction("🎸")
+
+
 @bot.command()
 async def join(ctx):
-    voicetrue = ctx.author.voice
-    if voicetrue is None:
-        embed = discord.Embed(title="⛔ You are not connected to the voice channel", color=color.random())
-        return await ctx.send(embed=embed)  
-    await ctx.author.voice.channel.connect()
-    embed = discord.Embed(title='Joined ✅',color=color.random())
-    await ctx.send(embed=embed)
-    
-@bot.command(name="leave", aliases=["dc"])
-async def leave(ctx):
-    player = music.get_player(guild_id=ctx.guild.id)
-    await player.stop()
+    if await MusicManager.join(ctx):
+        # await ctx.send("Joined Voice Channel")
+        emd = embed(description="Connected", color=color.random())
+        message = await ctx.send(embed=emd)
+        await message.add_reaction("✅")
 
-    voicetrue = ctx.author.voice
-    voicetrue_me = ctx.guild.me.voice
-    if voicetrue is None:
-        embed = discord.Embed(title="⛔ You are not connected to the voice channel !", color=color.random())
-        return await ctx.send(embed=embed)
-    if voicetrue_me is None:
-        embed = discord.Embed(title="I'm not on to voice channel", color=color.random())
-        return await ctx.send(embed=embed)
-    await bot.voice_clients[0].disconnect()   
-    embed = discord.Embed(title='Leave ✅', color=color.random())
-    await ctx.send(embed=embed)
+@bot.command(aliases=["p"])
+async def play(ctx, *, query: str):
+    if not ctx.voice_client or not ctx.voice_client.is_connected():
+        await MusicManager.join(ctx)
 
-    sleep(1.0)
-    await bot.voice_clients.disconnect()
+    async with ctx.typing():
+        players = await MusicManager.create_player(query, ctx.author)
 
-@bot.command(name="play", aliases=["p"])
-async def play(ctx, *, url):
+    if players:
+        if await MusicManager.queue_add(players=players, ctx=ctx) and not await MusicManager.play(ctx):
+            emd = embed(description="🎸 Added to queue", color=color.random())
+            emd.set_footer(text=f"Requested by {ctx.author.name}", icon_url=ctx.author.avatar_url)
+            message = await ctx.send(embed=emd)
+            await message.add_reaction("🎸")
+            # await ctx.send("Added to queue")
 
-    player = music.get_player(guild_id=ctx.guild.id)
-    if not player:
-        player = music.create_player(ctx, ffmpeg_error_betterfix=True)
-    if not ctx.voice_client.is_playing():
-        await player.queue(url, search=True)
-        song = await player.play()
-        emd = embed(title=f"Playing `{song.name}`")
-        await ctx.send(embed=emd)
     else:
-        song = await player.queue(url, search=True)
-        emd = embed(title=f"Queued `{song.name}`")
-        await ctx.send(embed=emd)
+        await ctx.send("Query not found.")
+
+
+@bot.command()
+async def lyrics(ctx, query: str = None):
+    if response := await MusicManager.lyrics(ctx, query):
+        title, author, query_lyrics = response
+
+        splitted = query_lyrics.split("\n")
+        res = []
+        current = ""
+        for i, split in enumerate(splitted):
+            if len(splitted) <= i + 1 or len(current) + len(splitted[i + 1]) > 1024:
+                res.append(current)
+                current = ""
+                continue
+            current += split + "\n"
+
+        page_manager = discordSuperUtils.PageManager(
+            ctx,
+            [
+                embed(
+                    # title=f"{title}** by **{author}",
+                    # description=x, color=color.random()
+                    description=f"**{title}** by **{author}**\n\n{x}",color=color.random()
+                ).add_field(name=f"(Page {i + 1}/{len(res)})", value="**>>**").set_footer(text=f"Requested by {ctx.author.name}", icon_url=ctx.author.avatar_url)
+
+                for i, x in enumerate(res)
+            ],
+            public=True,
+        )
+        await page_manager.run()
+
         
-        
+    else:
+        # await ctx.send("No lyrics found.")
+        emds = embed(description="⛔ No lyrics found.", color=color.red())
+        # emds.set_footer(text=f"Requested by {ctx.author.name}", icon_url=ctx.author.avatar_url)
+        message = await ctx.send(embed=emds)
+        await message.add_reaction("⛔")
+
+
 @bot.command()
 async def pause(ctx):
-    player = music.get_player(guild_id=ctx.guild.id)
-    song = await player.pause()
-    emd = embed(title=f"Paused `{song.name}`")
-    await ctx.send(embed=emd)
-    # await ctx.send(f"Paused {song.name}")
-    
+    if await MusicManager.pause(ctx):
+        # await ctx.send("Player paused.")
+        emd = embed(description=f"🎶 **Paused**", color=color.random())
+        emd.set_footer(text=f"Requested by {ctx.author.name}", icon_url=ctx.author.avatar_url)
+        message = await ctx.send(embed=emd)
+        await message.add_reaction("⏸️")
+
+
 @bot.command()
 async def resume(ctx):
-    player = music.get_player(guild_id=ctx.guild.id)
-    song = await player.resume()
-    emd = embed(title=f"Resumed `{song.name}`")
-    await ctx.send(embed=emd)
-    # await ctx.send(f"Resumed {song.name}")
-    
-@bot.command()
-async def stop(ctx):
-    player = music.get_player(guild_id=ctx.guild.id)
-    song =  player.stop()
-    emd = embed(title=f"Stopped `{song.name}`")
-    await ctx.send(embed=emd)
-    # await ctx.send("Stopped")
-    
+    if await MusicManager.resume(ctx):
+        # await ctx.send("Player resumed.")
+        emd = embed(description=f"🎶 **Resumed**", color=color.random())
+        emd.set_footer(text=f"Requested by {ctx.author.name}", icon_url=ctx.author.avatar_url)
+        message = await ctx.send(embed=emd)
+        await message.add_reaction("▶️")
+
+@bot.command(aliases=["vol"])
+async def volume(ctx, volume: int):
+    await MusicManager.volume(ctx, volume)
+    emd = embed(description=f"🎶 **Volume** : {volume}", color=color.random())
+    emd.set_footer(text=f"Requested by {ctx.author.name}", icon_url=ctx.author.avatar_url)
+    message = await ctx.send(embed=emd)
+    await message.add_reaction("🔊")
+
+
 @bot.command()
 async def loop(ctx):
-    player = music.get_player(guild_id=ctx.guild.id)
-    song = await player.toggle_song_loop()
-    if song.is_looping:
-        emd = embed(title=f"Enabled loop for `{song.name}`")
-        await ctx.send(embed=emd)
-        # await ctx.send(f"Enabled loop for {song.name}")
-    else:
-        emd = embed(title=f"Disabled loop for `{song.name}`")
-        await ctx.send(embed=emd)
-        # await ctx.send(f"Disabled loop for {song.name}")
-    
-@bot.command(name="queue", aliases=["q"])
-async def queue(ctx):
-    player = music.get_player(guild_id=ctx.guild.id)
-    nl = ")` \n **•** `(".join([song.name for song in player.current_queue()])
-    bc = "\n"
-    ti = "**•**"
-    emd = embed(title="Queue", description=f"{ti} `({nl})`{bc}")
-    await ctx.send(embed=emd)
-    # await ctx.send(f"`({')`\n `('.join([song.name for song in player.current_queue()])})`\n")
-    
-@bot.command(name="nowplaying", aliases=["np"])
-async def nowplaying(ctx):
-    player = music.get_player(guild_id=ctx.guild.id)
-    song = player.now_playing()
-    emd = embed(title=f"Now Playing `{song.name}`")
-    await ctx.send(embed=emd)
-    # await ctx.send(song.name)
-    
+    is_loop = await MusicManager.loop(ctx)
+
+    if is_loop is not None:
+        # await ctx.send(f"Looping toggled to {is_loop}")
+        emd = embed(description=f"🎶 **Looping toggled to** {is_loop}", color=color.random())
+        emd.set_footer(text=f"Requested by {ctx.author.name}", icon_url=ctx.author.avatar_url)
+        message = await ctx.send(embed=emd)
+        await message.add_reaction("🔁")
+
+
 @bot.command()
-async def skip(ctx):
-    player = music.get_player(guild_id=ctx.guild.id)
-    data = await player.skip(force=True)
-    if len(data) == 2:
-        emd = embed(title=f"Skipped from `{data[0].name}`")
+async def shuffle(ctx):
+    is_shuffle = await MusicManager.shuffle(ctx)
+
+    if is_shuffle is not None:
+        # await ctx.send(f"Shuffle toggled to {is_shuffle}")
+        emd = embed(description=f"🎶 **Shuffle toggled to** {is_shuffle}", color=color.random())
+        emd.set_footer(text=f"Requested by {ctx.author.name}", icon_url=ctx.author.avatar_url)
+        msg = await ctx.send(embed=emd) 
+        await msg.add_reaction("🔀")
+
+
+@bot.command()
+async def autoplay(ctx):
+    is_autoplay = await MusicManager.autoplay(ctx)
+
+    if is_autoplay is not None:
+        # await ctx.send(f"Autoplay toggled to {is_autoplay}")
+        emd = embed(description=f"Autoplay toggled to {is_autoplay}", color=color.random())
+        emd.set_footer(text=f"Requested by {ctx.author.name}", icon_url=ctx.author.avatar_url)
         await ctx.send(embed=emd)
-        # await ctx.send(f"Skipped from {data[0].name} to {data[1].name}")
-    else:
-        emd = embed(title=f"Skipped `{data[0].name}`")
-        await ctx.send(embed=emd)
-        # await ctx.send(f"Skipped {data[0].name}")
-
-@bot.command(name="volume", aliases=["vol"])
-async def volume(ctx, vol):
-    player = music.get_player(guild_id=ctx.guild.id)
-    song, volume = await player.change_volume(float(vol) / 100) 
-    emd = embed(title=f"Changed volume for `{song.name}` to `{volume*100}%`")
-    await ctx.send(embed=emd)
-    # await ctx.send(f"Changed volume for {song.name} to {volume*100}%")
-    
-@bot.command(name="remove", aliases=["rm"])
-async def remove(ctx, index):
-    player = music.get_player(guild_id=ctx.guild.id)
-    song = await player.remove_from_queue(int(index))
-    emd = embed(title=f"Removed `{song.name}` from queue")
-    await ctx.send(embed=emd)
-    # await ctx.send(f"Removed {song.name} from queue")
+        
 
 
+@bot.command(aliases=["ql"])
+async def queueloop(ctx):
+    is_loop = await MusicManager.queueloop(ctx)
 
-bot.run(token)
+    if is_loop is not None:
+        # await ctx.send(f"Queue looping toggled to {is_loop}")
+        emd = embed(description=f"Queue looping toggled to {is_loop}", color=color.random())
+        emd.set_footer(text=f"Requested by {ctx.author.name}", icon_url=ctx.author.avatar_url)
+        message = await ctx.send(embed=emd)
+        await message.add_reaction("🔁")
+
+@bot.command()
+async def skip(ctx, index: int = None):
+    await MusicManager.skip(ctx, index)
+
+@bot.command(aliases=["q"])
+async def queue(ctx):
+    if ctx_queue := await MusicManager.get_queue(ctx):
+        
+        formatted_queue = [
+            # f"`{x.title}` **>** {x.requester and x.requester.mention}"
+            f"{x.title}"
+            for x in ctx_queue.queue[ctx_queue.pos + 1 :]
+        ]
+
+        embeds = discordSuperUtils.generate_embeds(
+            formatted_queue,
+            "Queue",
+            f"`Now Playing` **:** `{await MusicManager.now_playing(ctx)}`",
+            25,
+            string_format="{}",
+        )
+        # embeds.
+
+        page_manager = discordSuperUtils.PageManager(ctx, embeds, public=True)
+        await page_manager.run()
+
+
+@bot.command()
+async def rewind(ctx, index: int = None):
+    await MusicManager.previous(ctx, index, no_autoplay=True)
+    emd = embed(description="**Rewind**", color=color.random())
+    emd.set_footer(text=f"Requested by {ctx.author.name}", icon_url=ctx.author.avatar_url)
+    message = await ctx.send(embed=emd)
+    await message.add_reaction("🔂")
+
+
+@bot.command(aliases=["loopstatus"])
+async def ls(ctx):
+    if queue := await MusicManager.get_queue(ctx):
+        loop = queue.loop
+        loop_status = None
+
+        if loop == discordSuperUtils.Loops.LOOP:
+            loop_status = "Looping enabled."
+
+        elif loop == discordSuperUtils.Loops.QUEUE_LOOP:
+            loop_status = "Queue looping enabled."
+
+        elif loop == discordSuperUtils.Loops.NO_LOOP:
+            loop_status = "No loop enabled."
+
+        if loop_status:
+            # await ctx.send(loop_status)
+            emd = embed(description=f"{loop_status}", color=color.random())
+            emd.set_footer(text=f"Requested by {ctx.author.name}", icon_url=ctx.author.avatar_url)
+            message = await ctx.send(embed=emd)
+            await message.add_reaction("🔁")
+
+
+bot.run("TOKEN")

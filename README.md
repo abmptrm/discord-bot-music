@@ -13,9 +13,9 @@ Semangat
 <h2>Module Bot</h2>
 <h3>Linux / Mac</h3>  
 <h5>$ pip3 install discord.py</h5>  
-<h5>$ pip3 install DiscordUtils</h5>  
+<h5>$ pip3 install discordSuperUtils</h5>  
 <h3>Windows</h3>  
 <h5>$ pip install discord.py</h5>  
-<h5>$ pip install DiscordUtils</h5>  
+<h5>$ pip install discordSuperUtils</h5>  
 <br>
 Python 3.8.10

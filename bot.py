@@ -9,8 +9,8 @@ from discord import Colour as color
 from discordSuperUtils import MusicManager
 
 
-client_id = "8c4b6ca346d749d0a065d768f2fdf4fb"
-client_secret = "53734343746a4b47b12991f95f021813"
+client_id = ""
+client_secret = "" #create app spotify for get id and secret
 
 bot = commands.Bot(command_prefix="?", help_command=None)
 MusicManager = MusicManager(bot, client_id=client_id,
